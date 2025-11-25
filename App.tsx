@@ -77,6 +77,7 @@ const App: React.FC = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<VideoAnalysisResult | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Tactics State
   const [currentScenario, setCurrentScenario] = useState<TacticalScenario | null>(null);
@@ -202,6 +203,30 @@ const App: React.FC = () => {
       setSelectedVideo(file);
       setVideoUrl(URL.createObjectURL(file));
       setAnalysisResult(null);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('video/')) {
+        setSelectedVideo(file);
+        setVideoUrl(URL.createObjectURL(file));
+        setAnalysisResult(null);
+      }
     }
   };
 
@@ -436,15 +461,28 @@ const App: React.FC = () => {
     <div className="h-full flex flex-col space-y-4 pb-20 overflow-y-auto">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.analyst.header}</h2>
         
-        <div className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-6 flex flex-col items-center justify-center min-h-[200px] border-dashed shadow-sm">
+        <div 
+          className={`bg-white dark:bg-slate-800 border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center min-h-[200px] shadow-sm transition-all ${
+            isDragging 
+              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 scale-[1.02]' 
+              : 'border-slate-300 dark:border-slate-700'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
             {!selectedVideo ? (
                 <>
-                    <Upload className="text-slate-400 dark:text-slate-500 mb-3" size={48} />
+                    <Upload className={`mb-3 transition-colors ${isDragging ? 'text-emerald-500' : 'text-slate-400 dark:text-slate-500'}`} size={48} />
                     <p className="text-slate-500 dark:text-slate-400 text-center mb-4">{t.analyst.uploadTitle}<br/>{t.analyst.uploadSubtitle}</p>
-                    <label className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg cursor-pointer font-bold transition-colors shadow-md">
-                        {t.analyst.selectBtn}
-                        <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
-                    </label>
+                    
+                    <div className="flex flex-col items-center gap-3 w-full max-w-xs">
+                        <label className="w-full bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg cursor-pointer font-bold transition-colors shadow-md text-center">
+                            {t.analyst.selectBtn}
+                            <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
+                        </label>
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">{t.analyst.dragDrop}</span>
+                    </div>
                 </>
             ) : (
                 <div className="w-full">
